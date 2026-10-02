@@ -108,7 +108,7 @@ body{background:var(--sky);color:var(--navy);font-family:'Balsamiq Sans','Comic 
 @media (prefers-reduced-motion: reduce){.pan{transition:opacity .3s}.p{animation-duration:.01s}.stage.shake .pan,.stage.boing .pan{animation:none}}
 
 /* card */
-.card{flex:1 1 0;overflow-y:auto;background:var(--cream);border-top:3px solid var(--navy);padding:14px 16px calc(14px + env(safe-area-inset-bottom,0px));display:flex;flex-direction:column;gap:10px;min-height:190px}
+.card{flex:1 1 0;overflow-y:auto;background:var(--cream);border-top:3px solid var(--navy);padding:14px 16px max(12px, env(safe-area-inset-bottom,0px));display:flex;flex-direction:column;gap:10px;min-height:190px}
 .lblrow{display:flex;align-items:center;gap:10px;justify-content:space-between}
 .pill{background:var(--butter);color:var(--navy);font-weight:700;font-size:12px;letter-spacing:.06em;padding:5px 12px;border-radius:999px;white-space:nowrap}
 .num{font-size:12px;color:var(--muted);font-variant-numeric:tabular-nums}
@@ -116,7 +116,7 @@ body{background:var(--sky);color:var(--navy);font-family:'Balsamiq Sans','Comic 
 .story{font-size:16px;line-height:1.5;max-width:60ch;color:var(--navy)}
 .story.ph{color:var(--muted);font-style:italic;border:2px dashed rgba(27,47,107,.25);border-radius:12px;padding:10px 12px}
 .nav{display:flex;gap:10px;margin-top:auto}
-.nav{position:sticky;bottom:calc(-14px - env(safe-area-inset-bottom,0px));margin:auto -16px calc(-14px - env(safe-area-inset-bottom,0px));padding:10px 16px calc(14px + env(safe-area-inset-bottom,0px));background:var(--cream);box-shadow:0 -10px 12px -6px var(--cream)}
+.nav{position:sticky;bottom:calc(-1 * max(12px, env(safe-area-inset-bottom,0px)));margin:auto -16px calc(-1 * max(12px, env(safe-area-inset-bottom,0px)));padding:10px 16px max(12px, env(safe-area-inset-bottom,0px));background:var(--cream);box-shadow:0 -10px 12px -6px var(--cream)}
 .story{font-size:16.5px}
 .nav button{flex:1;min-height:48px;border-radius:14px;border:2px solid var(--navy);background:#fff;color:var(--navy);font:700 16px 'Balsamiq Sans',sans-serif;cursor:pointer}
 .nav button.primary{background:var(--navy);color:#fff}
@@ -167,7 +167,9 @@ button:focus-visible{outline:3px solid var(--red);outline-offset:2px}
 .start{min-height:56px;padding:0 28px;border-radius:999px;border:3px solid var(--navy);background:var(--red);color:#fff;font:900 20px 'Rubik',sans-serif;cursor:pointer;box-shadow:0 4px 0 var(--navy)}
 .start:active{translate:0 3px;box-shadow:0 1px 0 var(--navy)}
 .hap{position:absolute;opacity:0;pointer-events:none;width:1px;height:1px;overflow:hidden}
-@media (min-width:600px){body{background:#262624;display:grid;place-items:center}.app{height:min(852px,calc(100vh - 40px));width:auto;aspect-ratio:393/852;max-width:none;margin:0;border-radius:36px;overflow:hidden;box-shadow:0 20px 60px rgba(0,0,0,.35)}}
+/* приложение всегда ровно по экрану телефона, без прокрутки всей страницы */
+.app{position:fixed;top:0;bottom:0;left:0;right:0;height:auto;margin:0 auto;max-width:430px}
+@media (min-width:600px){body{background:#262624}.app{top:50%;left:50%;right:auto;bottom:auto;transform:translate(-50%,-50%);width:393px;height:min(852px,calc(100vh - 40px));max-width:none;margin:0;border-radius:36px;overflow:hidden;box-shadow:0 20px 60px rgba(0,0,0,.35)}.intro .title{font-size:42px}}
 </style>
 
 <div class="app">
@@ -848,7 +850,7 @@ MUS.setLevels({"0": 0.81, "1": 0.82, "2": 0.2, "3": 0.71, "4": 1.03, "5": 0.83, 
 const TRACKS = {intro:'a/intro.mp3', 0:'a/s0.mp3', 1:'a/s1.mp3', 2:'a/s2.mp3', 3:'a/s3.mp3', 4:'a/s4.mp3', 5:'a/s5.mp3', 6:'a/s6b.mp3', 7:'a/s7.mp3', 8:'a/s8b.mp3', 9:'a/s9.mp3', 10:'a/s10.mp3', 11:'a/s11.mp3', 12:'a/s12.mp3', 13:'a/s13.mp3', 14:'a/s14.mp3', fin:'a/fin.mp3', bday:'a/bday.mp3'};
 const TRK = (() => { const bufs = {}, loading = {}; let src = null, g = null, curKey = null;
   function load(k){ if (bufs[k]) return Promise.resolve(bufs[k]); if (loading[k]) return loading[k];
-    return loading[k] = fetch(TRACKS[k] + '?v=1790960397').then(r => r.arrayBuffer()).then(ab => new Promise((res, rej) => ac.decodeAudioData(ab, res, rej))).then(b => (bufs[k] = b)).catch(() => null); }
+    return loading[k] = fetch(TRACKS[k] + '?v=1790960976').then(r => r.arrayBuffer()).then(ab => new Promise((res, rej) => ac.decodeAudioData(ab, res, rej))).then(b => (bufs[k] = b)).catch(() => null); }
   function stop(){ if (g){ const gg = g, s = src, now = ac.currentTime; gg.gain.cancelScheduledValues(now); gg.gain.setValueAtTime(gg.gain.value, now); gg.gain.linearRampToValueAtTime(0, now + .9); setTimeout(() => { try { s.stop(); gg.disconnect(); } catch(e){} }, 1100); } g = null; src = null; curKey = null; }
   function start(k, delay = 0){ if (curKey === k) return; stop(); curKey = k;
     load(k).then(b => { if (!b || curKey !== k || muted) return;
