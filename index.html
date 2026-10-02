@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="mobile-web-app-capable" content="yes">
-<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
 <meta name="apple-mobile-web-app-title" content="Подарок">
 <meta name="theme-color" content="#D8EEFA">
 <link rel="apple-touch-icon" href="icon-180.png">
@@ -20,7 +20,7 @@
 }
 html,body{height:100%;overflow:hidden;margin:0}
 html{background:#D8EEFA}
-body{box-sizing:border-box;padding-top:env(safe-area-inset-top)}
+body{box-sizing:border-box}
 body{background:var(--sky);color:var(--navy);font-family:'Balsamiq Sans','Comic Sans MS',system-ui,sans-serif;overflow:hidden;-webkit-tap-highlight-color:transparent;overscroll-behavior:none}
 .app{height:100%;max-width:430px;margin:0 auto;position:relative;overflow:hidden;background:var(--sky);display:flex;flex-direction:column;padding-inline:0}
 .wv{display:inline-block;white-space:pre}
@@ -429,6 +429,17 @@ function haptic(){ try { if (navigator.vibrate) navigator.vibrate(12); else $('h
 const ICON_ON = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 9v6h4l5 4V5L8 9H4z"/><path d="M16.5 8.5a5 5 0 0 1 0 7"/><path d="M19 6a8.5 8.5 0 0 1 0 12"/></svg>';
 const ICON_OFF = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 9v6h4l5 4V5L8 9H4z"/><path d="M17 9l5 6M22 9l-5 6"/></svg>';
 function setMute(m){ muted = m; $('mute').innerHTML = m ? ICON_OFF : ICON_ON; $('mute').setAttribute('aria-label', m ? 'Включить звук' : 'Выключить звук'); if (master) master.gain.value = m ? 0 : 1; }
+/* свернули приложение или нажали паузу на экране блокировки — музыка замолкает */
+let bgPaused = false;
+function pauseAll(){ if (ac && ac.state === 'running'){ bgPaused = true; ac.suspend().catch(()=>{}); } }
+function resumeAll(){ if (ac && bgPaused && !muted){ bgPaused = false; ac.resume().catch(()=>{}); } }
+document.addEventListener('visibilitychange', () => { document.hidden ? pauseAll() : resumeAll(); });
+window.addEventListener('pagehide', pauseAll);
+try { if ('mediaSession' in navigator){
+  navigator.mediaSession.setActionHandler('pause', () => { pauseAll(); navigator.mediaSession.playbackState = 'paused'; });
+  navigator.mediaSession.setActionHandler('play', () => { bgPaused = true; resumeAll(); navigator.mediaSession.playbackState = 'playing'; });
+  navigator.mediaSession.setActionHandler('stop', () => { pauseAll(); });
+} } catch(e){}
 $('mute').addEventListener('click', () => { unlockIOS(); initAudio(); setMute(!muted); if (muted) stopSongs(); else startSong(currentSongKey()); });
 setMute(false);
 
@@ -837,7 +848,7 @@ MUS.setLevels({"0": 0.81, "1": 0.82, "2": 0.2, "3": 0.71, "4": 1.03, "5": 0.83, 
 const TRACKS = {intro:'a/intro.mp3', 0:'a/s0.mp3', 1:'a/s1.mp3', 2:'a/s2.mp3', 3:'a/s3.mp3', 4:'a/s4.mp3', 5:'a/s5.mp3', 6:'a/s6b.mp3', 7:'a/s7.mp3', 8:'a/s8b.mp3', 9:'a/s9.mp3', 10:'a/s10.mp3', 11:'a/s11.mp3', 12:'a/s12.mp3', 13:'a/s13.mp3', 14:'a/s14.mp3', fin:'a/fin.mp3', bday:'a/bday.mp3'};
 const TRK = (() => { const bufs = {}, loading = {}; let src = null, g = null, curKey = null;
   function load(k){ if (bufs[k]) return Promise.resolve(bufs[k]); if (loading[k]) return loading[k];
-    return loading[k] = fetch(TRACKS[k] + '?v=1790959079').then(r => r.arrayBuffer()).then(ab => new Promise((res, rej) => ac.decodeAudioData(ab, res, rej))).then(b => (bufs[k] = b)).catch(() => null); }
+    return loading[k] = fetch(TRACKS[k] + '?v=1790960397').then(r => r.arrayBuffer()).then(ab => new Promise((res, rej) => ac.decodeAudioData(ab, res, rej))).then(b => (bufs[k] = b)).catch(() => null); }
   function stop(){ if (g){ const gg = g, s = src, now = ac.currentTime; gg.gain.cancelScheduledValues(now); gg.gain.setValueAtTime(gg.gain.value, now); gg.gain.linearRampToValueAtTime(0, now + .9); setTimeout(() => { try { s.stop(); gg.disconnect(); } catch(e){} }, 1100); } g = null; src = null; curKey = null; }
   function start(k, delay = 0){ if (curKey === k) return; stop(); curKey = k;
     load(k).then(b => { if (!b || curKey !== k || muted) return;
